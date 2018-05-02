@@ -1,0 +1,133 @@
+<?xml version="1.0"?>
+<project name="fax" basedir="." default="build">
+	<property file="build.properties" />
+	<property name="src.dir" value="src" />
+	<property name="web.dir" value="WebContent" />
+	<property name="build.dir" value="${web.dir}/WEB-INF/classes" />
+	<property name="name" value="fax" />
+	<property name="yuicompressor" value="${web.dir}/WEB-INF/lib/yuicompressor-2.4.7.jar"/>
+	<property name="jsdir" value="${web.dir}/app/controllers/"/>
+	<property name="min.dir" value="target/min"/>
+
+	<path id="master-classpath">
+		<fileset dir="${web.dir}/WEB-INF/lib">
+			<include name="*.jar" />
+		</fileset>
+		<pathelement path="${build.dir}" />
+	</path>
+
+	<target name="build" description="Default build" depends="compile,build-war" >
+	</target>
+
+	<target name="compile" description="Compile source tree java files" depends="clean" >
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="target/min/WebContent" />
+		<javac destdir="${build.dir}" source="1.6" target="1.6">
+			<src path="${src.dir}" />
+			<classpath refid="master-classpath" />
+		</javac>
+		<copy todir="${build.dir}">
+			<fileset dir="${src.dir}" includes="**/*"/>
+		</copy>
+
+		<copy todir="target/min/WebContent">
+			<fileset dir="${web.dir}">
+				<exclude name="**/app/controllers/**" />
+				<exclude name="**/app/css/**" />
+				<exclude name="**/app/js/**" />
+				<exclude name="**/app/services/**" />
+
+				<exclude name="**app/*.js" />
+
+				<include name="**/*.*" />
+			</fileset>
+		</copy>
+
+		<!-- pri
+		<delete>
+		    <fileset dir="${min.dir}/WebContent/app/controllers"  />
+			<fileset dir="${min.dir}/WebContent/app/services"  />
+			<fileset dir="${min.dir}/WebContent/app/css"  />
+			<fileset dir="${min.dir}/WebContent/app/js" />
+		</delete>
+		pri -->
+	</target>
+
+	<target name="clean" description="Clean output directories">
+		<delete file="target/cqi.war" />
+		<delete file="${min.dir}" />
+		<delete>
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+			</fileset>
+		</delete>
+	</target>
+	<target name="minify-js" description="Minify js files" depends="clean">
+		<mkdir dir="target/min/WebContent/app/services/factory" />
+		<mkdir dir="${min.dir}/WebContent/app/controllers/factory"/>
+		<mkdir dir="target/min/WebContent/app/services" />
+		<apply executable="java" parallel="false" dest="target/min/WebContent/app/services">
+			<fileset dir="${web.dir}/app/services" includes="**/*.js" />
+			<arg line="-jar"/>
+			<arg path="${yuicompressor}" />
+			<arg line="-v"/>
+			<srcfile/>
+			<arg line="-o"/>
+			<mapper type="glob" from="*.js" to="*.js"/>
+			<targetfile/>
+		</apply>
+		<mkdir dir="${min.dir}/WebContent/app/controllers" />
+		<apply executable="java" parallel="false" dest="${min.dir}/WebContent/app/controllers">
+			<fileset dir="${web.dir}/app/controllers" includes="**/*.js" />
+			<arg line="-jar"/>
+			<arg path="${yuicompressor}" />
+			<arg line="-v"/>
+			<srcfile/>
+			<arg line="-o"/>
+			<mapper type="glob" from="*.js" to="*.js"/>
+			<targetfile/>
+		</apply>
+		<mkdir dir="${min.dir}/WebContent/app/css" />
+		<apply executable="java" parallel="false" dest="${min.dir}/WebContent/app/css">
+			<fileset dir="${web.dir}/app/css" includes="**/*.css" />
+			<arg line="-jar"/>
+			<arg path="${yuicompressor}" />
+			<arg line="-v"/>
+			<srcfile/>
+			<arg line="-o"/>
+			<mapper type="glob" from="*.css" to="*.css"/>
+			<targetfile/>
+		</apply>
+		<mkdir dir="target/min/WebContent/app/js" />
+		<apply executable="java" parallel="false" dest="${min.dir}/WebContent/app/js">
+			<fileset dir="${web.dir}/app/js" includes="**/*.js" />
+			<arg line="-jar"/>
+			<arg path="${yuicompressor}" />
+			<arg line="-v"/>
+			<srcfile/>
+			<arg line="-o"/>
+			<mapper type="glob" from="*.js" to="*.js"/>
+			<targetfile/>
+		</apply>
+		<apply executable="java" parallel="false" dest="${min.dir}/WebContent/app">
+			<fileset dir="${web.dir}/app" includes="*.js" />
+			<arg line="-jar"/>
+			<arg path="${yuicompressor}" />
+			<arg line="-v"/>
+			<srcfile/>
+			<arg line="-o"/>
+			<mapper type="glob" from="*.js" to="*.js"/>
+			<targetfile/>
+		</apply>
+
+	</target>
+	<target name="build-war" depends="clean,compile,minify-js">
+		<war destfile="target/cqi.war" webxml="${web.dir}/WEB-INF/web.xml">
+			<fileset dir="${min.dir}/WebContent/">
+			</fileset>
+			<lib dir="${web.dir}/WEB-INF/lib">
+			</lib>
+			<classes dir="${build.dir}" />
+		</war>
+	</target>
+</project>
